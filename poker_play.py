@@ -52,6 +52,7 @@ def betting_round(player_chips, computer_chips, pot, game_over, folder):
         bet_amount = 10
         print(f"computer bets {bet_amount}")
         computer_behavior = 10
+        bet_amount = computer_behavior
     else:
         computer_behavior = computer_handler(
             False, 0, 0, computer_chips, pot, computer_hand_str, community_cards_str
@@ -88,8 +89,6 @@ def betting_round(player_chips, computer_chips, pot, game_over, folder):
         computer_behavior = computer_handler(
             False, 0, 0, computer_chips, pot, computer_hand_str, community_cards_str
         )
-        if computer_behavior != "f":
-            computer_behavior = "a"
 
         if computer_behavior == "f":
             player_chips += pot
@@ -112,7 +111,7 @@ def betting_round(player_chips, computer_chips, pot, game_over, folder):
         return player_chips, computer_chips, pot, game_over, folder
 
     else:  # player raises
-        player_chips -= player_bet
+        player_chips -= bet_amount
         pot += bet_amount
         print(f"you raised {player_bet}")
         raise_amount = player_bet - bet_amount
@@ -160,13 +159,12 @@ def betting_round(player_chips, computer_chips, pot, game_over, folder):
                     print("you fold, computer wins")
                     break
             else:  # re-raise
-                new_bet = computer_behavior
-                computer_chips -= new_bet - bet_amount
-                pot += new_bet - bet_amount
-                bet_amount = new_bet
-                print(f"computer raised {new_bet}")
+                computer_chips -= computer_behavior - bet_amount
+                pot += computer_behavior - bet_amount
+                bet_amount = computer_behavior
+                print(f"computer raised {computer_behavior}")
                 raised_player_bet = option_to_reraise(
-                    new_bet, player_bet, player_chips, False
+                    computer_behavior, player_bet, player_chips, False
                 )
 
                 while True:
@@ -185,9 +183,6 @@ def betting_round(player_chips, computer_chips, pot, game_over, folder):
                                 computer_hand_str,
                                 community_cards_str,
                             )
-                            if computer_behavior != "f":
-                                computer_behavior = "a"
-
                             if computer_behavior == "f":
                                 player_chips += pot
                                 pot = 0
@@ -217,7 +212,7 @@ def betting_round(player_chips, computer_chips, pot, game_over, folder):
                         else:
                             raised_player_bet = int(raised_player_bet)
                             if (
-                                raised_player_bet < new_bet * 2
+                                raised_player_bet < computer_behavior * 2
                                 or raised_player_bet > player_chips - 1
                             ):
                                 raise ValueError
@@ -242,70 +237,78 @@ def main():
     deck = create_deck()
 
     global player_hand, computer_hand, community_cards, revealed
-    player_hand, computer_hand = deal_hands(deck)
-    community_cards = deal_community_cards(deck)
+    player_hand, computer_hand = deal_hands(deck)  # deck is updated
+    community_cards = deal_community_cards(deck)  # again. deck is updated
 
     global player_hand_str, computer_hand_str, community_cards_str
     player_hand_str = [str(card) for card in player_hand]
     computer_hand_str = [str(card) for card in computer_hand]
     full_community_cards_str = [str(card) for card in community_cards]
 
-    print("pre-flop betting round")
+    print("================ pre-flop betting round====================")
     revealed = 0
     community_cards_str = full_community_cards_str[:revealed]
     show_hands(player_hand, community_cards, revealed)
     player_chips, computer_chips, pot, game_over, folder = betting_round(
         player_chips, computer_chips, pot, game_over, folder
     )
-    if not game_over:
-        print("flop")
+    while not game_over:  # better than if-if-if.
+        print("===================flop===================")
         revealed = 3
         community_cards_str = full_community_cards_str[:revealed]
         show_hands(player_hand, community_cards, revealed)
         player_chips, computer_chips, pot, game_over, folder = betting_round(
             player_chips, computer_chips, pot, game_over, folder
         )
+        if game_over:
+            break
 
-    if not game_over:
-        print("turn")
+        print("======================turn====================")
         revealed = 4
         community_cards_str = full_community_cards_str[:revealed]
         show_hands(player_hand, community_cards, revealed)
         player_chips, computer_chips, pot, game_over, folder = betting_round(
             player_chips, computer_chips, pot, game_over, folder
         )
+        if game_over:
+            break
 
-    if not game_over:
-        print("river")
+        print("===================river===================")
         revealed = 5
         community_cards_str = full_community_cards_str[:revealed]
         show_hands(player_hand, community_cards, revealed)
         player_chips, computer_chips, pot, game_over, folder = betting_round(
             player_chips, computer_chips, pot, game_over, folder
         )
+        if game_over:
+            break
 
     if folder is None:
-        print("showdown")
+        print("=====================showdown====================")
         revealed = 5
         show_hands(player_hand, community_cards, revealed, computer_hand)
-    else:
-        print("no showdown")
 
-    if folder is None:
         result = determine_winner(
             player_hand_str, computer_hand_str, community_cards_str
         )
         print(result)
-        if result == "player":
-            player_chips += pot
-            pot = 0
-        elif result == "computer":
-            computer_chips += pot
-            pot = 0
-        else:
-            player_chips += pot // 2
-            computer_chips += pot // 2
-            pot = 0
+        match result:
+            case "player":
+                player_chips += pot
+            case "computer":
+                computer_chips += pot
+            case _:
+                player_chips += pot // 2
+                computer_chips += pot // 2
+        pot = 0
+    else:
+        print("no showdown")
+        match folder:
+            case "player":
+                computer_chips += pot
+            case "computer":
+                player_chips += pot
+        pot = 0
 
     print(f"player's chips: {player_chips}, computer's chips: {computer_chips}")
 
