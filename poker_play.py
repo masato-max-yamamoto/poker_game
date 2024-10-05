@@ -67,7 +67,7 @@ def betting_round(player_chips, computer_chips, pot, game_over, folder):
             bet_amount = computer_behavior
             print(f"computer bets {bet_amount}")
     computer_chips -= bet_amount
-    pot = bet_amount
+    pot += bet_amount
     print(f"pot: {pot}")
 
     raised = False
@@ -252,7 +252,8 @@ def main():
     player_chips, computer_chips, pot, game_over, folder = betting_round(
         player_chips, computer_chips, pot, game_over, folder
     )
-    while not game_over:  # better than if-if-if.
+
+    if not game_over:  
         print("===================flop===================")
         revealed = 3
         community_cards_str = full_community_cards_str[:revealed]
@@ -260,9 +261,8 @@ def main():
         player_chips, computer_chips, pot, game_over, folder = betting_round(
             player_chips, computer_chips, pot, game_over, folder
         )
-        if game_over:
-            break
-
+    
+    if not game_over:
         print("======================turn====================")
         revealed = 4
         community_cards_str = full_community_cards_str[:revealed]
@@ -270,9 +270,8 @@ def main():
         player_chips, computer_chips, pot, game_over, folder = betting_round(
             player_chips, computer_chips, pot, game_over, folder
         )
-        if game_over:
-            break
 
+    if not game_over:
         print("===================river===================")
         revealed = 5
         community_cards_str = full_community_cards_str[:revealed]
@@ -280,8 +279,6 @@ def main():
         player_chips, computer_chips, pot, game_over, folder = betting_round(
             player_chips, computer_chips, pot, game_over, folder
         )
-        if game_over:
-            break
 
     if folder is None:
         print("=====================showdown====================")
